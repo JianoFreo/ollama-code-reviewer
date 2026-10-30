@@ -1,4 +1,5 @@
 
+import "dotenv/config";
 import { CODE_REVIEW_PROMPT } from "../prompts/code-review.prompt.js";
 
 interface OllamaResponse {
@@ -8,14 +9,25 @@ interface OllamaResponse {
     };
 }
 
+const AI_BASE_URL = process.env.AI_BASE_URL;
+const AI_MODEL = process.env.AI_MODEL;
+const AI_API_KEY = process.env.AI_API_KEY;
+
 export async function reviewWithOllama(diff: string): Promise<string> {
-    const response = await fetch("http://localhost:11434/api/chat", {
+    if (!AI_BASE_URL || !AI_MODEL) {
+        throw new Error("AI configuration is missing from environment variables.");
+    }
+
+    const response = await fetch(`${AI_BASE_URL}/api/chat`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...(AI_API_KEY && {
+                Authorization: `Bearer ${AI_API_KEY}`
+            })
         },
         body: JSON.stringify({
-            model: "qwen2.5-coder:7b",
+            model: AI_MODEL,
             stream: false,
             messages: [
                 {
@@ -31,7 +43,7 @@ export async function reviewWithOllama(diff: string): Promise<string> {
     });
 
     if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.status}`);
+        throw new Error(`AI API error: ${response.status}`);
     }
 
     const result = await response.json() as OllamaResponse;

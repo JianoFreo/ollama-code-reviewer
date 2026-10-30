@@ -1,11 +1,5 @@
 
-import "dotenv/config";
-
-const GITHUB_API = "https://api.github.com";
-
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER;
-const GITHUB_REPO = process.env.GITHUB_REPO;
+import { ENV } from "../config/env.js";
 
 interface GitHubFile {
     filename: string;
@@ -21,16 +15,23 @@ interface PullRequestReviewComment {
     body: string;
 }
 
-async function githubRequest(endpoint: string, options: RequestInit = {}) {
-    if (!GITHUB_TOKEN) {
+async function githubRequest(
+    endpoint: string,
+    options: RequestInit = {}
+) {
+    if (!ENV.GITHUB_TOKEN) {
         throw new Error("GITHUB_TOKEN is not configured.");
     }
 
-    const response = await fetch(`${GITHUB_API}${endpoint}`, {
+    if (!ENV.GITHUB_OWNER || !ENV.GITHUB_REPO) {
+        throw new Error("GitHub repository configuration is missing.");
+    }
+
+    const response = await fetch(`${ENV.GITHUB_API_URL}${endpoint}`, {
         ...options,
         headers: {
             Accept: "application/vnd.github+json",
-            Authorization: `Bearer ${GITHUB_TOKEN}`,
+            Authorization: `Bearer ${ENV.GITHUB_TOKEN}`,
             "X-GitHub-Api-Version": "2022-11-28",
             "Content-Type": "application/json",
             ...options.headers
@@ -50,7 +51,7 @@ export async function getPullRequestFiles(
     pullNumber: number
 ): Promise<GitHubFile[]> {
     const response = await githubRequest(
-        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls/${pullNumber}/files`
+        `/repos/${ENV.GITHUB_OWNER}/${ENV.GITHUB_REPO}/pulls/${pullNumber}/files`
     );
 
     return response.json() as Promise<GitHubFile[]>;
@@ -63,7 +64,13 @@ export async function getPullRequestDiff(
 
     return files
         .map(file => {
-            return `File: ${file.filename}\nStatus: ${file.status}\n${file.patch ?? "Diff unavailable."}`;
+            return [
+                `File: ${file.filename}`,
+                `Status: ${file.status}`,
+                `Additions: ${file.additions}`,
+                `Deletions: ${file.deletions}`,
+                file.patch ?? "Diff unavailable."
+            ].join("\n");
         })
         .join("\n\n");
 }
@@ -73,7 +80,7 @@ export async function postReviewComments(
     comments: PullRequestReviewComment[]
 ): Promise<void> {
     await githubRequest(
-        `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls/${pullNumber}/reviews`,
+        `/repos/${ENV.GITHUB_OWNER}/${ENV.GITHUB_REPO}/pulls/${pullNumber}/reviews`,
         {
             method: "POST",
             body: JSON.stringify({
