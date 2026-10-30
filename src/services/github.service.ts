@@ -51,7 +51,7 @@ export async function getPullRequestFiles(
     pullNumber: number
 ): Promise<GitHubFile[]> {
     const response = await githubRequest(
-        `/repos/${ENV.GITHUB_OWNER}/${ENV.GITHUB_REPO}/pulls/${pullNumber}/files`
+        `/repos/${ENV.GITHUB_OWNER}/${ENV.GITHUB_REPO}/pulls/${pullNumber}/files?per_page=100`
     );
 
     return response.json() as Promise<GitHubFile[]>;
@@ -86,6 +86,22 @@ export async function postReviewComments(
             body: JSON.stringify({
                 event: "COMMENT",
                 comments
+            })
+        }
+    );
+}
+
+export async function postReviewSummary(
+    pullNumber: number,
+    body: string
+): Promise<void> {
+    await githubRequest(
+        `/repos/${ENV.GITHUB_OWNER}/${ENV.GITHUB_REPO}/pulls/${pullNumber}/reviews`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                event: "COMMENT",
+                body
             })
         }
     );
