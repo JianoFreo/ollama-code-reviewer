@@ -1,21 +1,36 @@
 {
   "name": "ollama-code-reviewer",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI-powered GitHub PR code reviewer using Ollama",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/JianoFreo/ollama-code-reviewer.git"
   },
-  "keywords": [],
+  "keywords": [
+    "ollama",
+    "github",
+    "code-review",
+    "ai"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/JianoFreo/ollama-code-reviewer/issues"
   },
-  "homepage": "https://github.com/JianoFreo/ollama-code-reviewer#readme"
+  "homepage": "https://github.com/JianoFreo/ollama-code-reviewer#readme",
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
 }
