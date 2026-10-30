@@ -20,7 +20,7 @@
   ],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/JianoFreo/ollama-code-reviewer/issues"
   },
