@@ -1,6 +1,10 @@
-export async function reviewPullRequest() {
-    // 1. Get PR diff from GitHub.
-    // 2. Send diff to Ollama.
-    // 3. Process the AI findings.
-    // 4. Send findings back to GitHub.
+
+import { reviewWithOllama } from "./ollama.service.js";
+
+export async function reviewDiff(diff: string): Promise<string> {
+    console.log("Sending code changes to Ollama...");
+
+    const review = await reviewWithOllama(diff);
+
+    return review;
 }

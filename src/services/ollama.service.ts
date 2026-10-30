@@ -1,4 +1,14 @@
-export async function reviewWithOllama(diff: string) {
+
+import { CODE_REVIEW_PROMPT } from "../prompts/code-review.prompt.js";
+
+interface OllamaResponse {
+    message: {
+        role: string;
+        content: string;
+    };
+}
+
+export async function reviewWithOllama(diff: string): Promise<string> {
     const response = await fetch("http://localhost:11434/api/chat", {
         method: "POST",
         headers: {
@@ -10,7 +20,7 @@ export async function reviewWithOllama(diff: string) {
             messages: [
                 {
                     role: "system",
-                    content: "You are a senior software engineer reviewing code changes."
+                    content: CODE_REVIEW_PROMPT
                 },
                 {
                     role: "user",
@@ -20,7 +30,11 @@ export async function reviewWithOllama(diff: string) {
         })
     });
 
-    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status}`);
+    }
+
+    const result = await response.json() as OllamaResponse;
 
     return result.message.content;
 }
