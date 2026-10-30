@@ -1,0 +1,21 @@
+{
+  "name": "ollama-code-reviewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JianoFreo/ollama-code-reviewer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/JianoFreo/ollama-code-reviewer/issues"
+  },
+  "homepage": "https://github.com/JianoFreo/ollama-code-reviewer#readme"
+}
