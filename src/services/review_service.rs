@@ -1,4 +1,3 @@
-//! review.service.ts  ->  review_service.rs
 //!
 //! The "brain" of the app. It decides WHAT to review (which files, how much of
 //! each) and glues the GitHub service and the Ollama service together.
@@ -15,7 +14,7 @@ use regex::Regex;
 use crate::services::github_service::{get_pull_request_files, post_review_summary};
 use crate::services::ollama_service::review_with_ollama;
 
-// TS:  const SKIP_PATTERNS = [ /package-lock\.json$/, ... ];
+// SKIP_PATTERNS = [ /package-lock\.json$/, ... ];
 //
 // Regex literals (/.../) don't exist in Rust; we write the pattern as a normal
 // string and compile it with `Regex::new`. `r"..."` (raw string) means we
@@ -42,13 +41,13 @@ static SKIP_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 // Small local models struggle with huge inputs, so cap each file's patch.
 const MAX_PATCH_CHARS: usize = 12000;
 
-// TS:  export async function reviewDiff(diff: string): Promise<string>
+// export async function reviewDiff(diff: string): Promise<string>
 pub async fn review_diff(diff: &str) -> Result<String> {
     println!("Sending code changes to Ollama...");
     review_with_ollama(diff).await
 }
 
-// TS:  export async function reviewPullRequest(pullNumber: number, post = false)
+// export async function reviewPullRequest(pullNumber: number, post = false)
 //
 // Rust has no default parameter values (`post = false`), so the caller
 // (main.rs) always passes `post` explicitly.
@@ -56,7 +55,7 @@ pub async fn review_pull_request(pull_number: u64, post: bool) -> Result<String>
     println!("Fetching files for PR #{pull_number}...");
     let files = get_pull_request_files(pull_number).await?;
 
-    // TS:  files.filter(f => f.patch && !SKIP_PATTERNS.some(re => re.test(f.filename)))
+    //files.filter(f => f.patch && !SKIP_PATTERNS.some(re => re.test(f.filename)))
     //
     // `into_iter()` hands over ownership of each file; `.filter(...)` keeps the
     // ones where the closure returns true; `.collect()` gathers them in a Vec.
@@ -74,11 +73,11 @@ pub async fn review_pull_request(pull_number: u64, post: bool) -> Result<String>
         return Ok("No reviewable changes found in this pull request.".to_string());
     }
 
-    // TS:  const sections: string[] = [];
+    // const sections: string[] = [];
     // `mut` = "this variable can be changed". Variables are read-only by default!
     let mut sections: Vec<String> = Vec::new();
 
-    // TS:  for (const [i, file] of reviewable.entries())
+    // for (const [i, file] of reviewable.entries())
     for (i, file) in reviewable.iter().enumerate() {
         println!(
             "Reviewing {} ({}/{})...",
@@ -87,11 +86,11 @@ pub async fn review_pull_request(pull_number: u64, post: bool) -> Result<String>
             reviewable.len()
         );
 
-        // TS:  let patch = file.patch!;     (the `!` meant "trust me, it's not undefined")
+        // The `!` meant "trust me, it's not undefined"
         // The filter above guarantees it's Some, so unwrap_or("") never actually hits "".
         let patch = file.patch.as_deref().unwrap_or("");
 
-        // TS:  if (patch.length > MAX_PATCH_CHARS) { patch = patch.slice(0, MAX_PATCH_CHARS); note = "..." }
+        //if (patch.length > MAX_PATCH_CHARS) { patch = patch.slice(0, MAX_PATCH_CHARS); note = "..." }
         //
         // We count/cut by CHARACTERS (`.chars()`), not bytes. Rust strings are
         // UTF-8, so slicing at a raw byte position could land in the middle of
@@ -108,7 +107,7 @@ pub async fn review_pull_request(pull_number: u64, post: bool) -> Result<String>
 
         let input = format!("File: {}\nStatus: {}\n\n{}", file.filename, file.status, patch);
 
-        // TS:  try { ... } catch (error) { ... }
+        //  try { ... } catch (error) { ... }
         //
         // Rust has no try/catch. Instead the function returns a Result and we
         // `match` on it: Ok(...) is the "try" path, Err(...) is the "catch".
