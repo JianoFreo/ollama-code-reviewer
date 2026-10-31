@@ -31,7 +31,6 @@ static HTTP: LazyLock<Client> = LazyLock::new(|| {
 // Types
 // ---------------------------------------------------------------------
 
-// TS:  interface GitHubFile { filename: string; status: string; patch?: string; ... }
 //
 // `Deserialize` is what makes `response.json()` work: serde reads the JSON and
 // fills in this struct. Extra fields GitHub sends (sha, blob_url, ...) are
@@ -62,7 +61,6 @@ pub struct PullRequestReviewComment {
 // The shared request helper
 // ---------------------------------------------------------------------
 
-// TS:  async function githubRequest(endpoint: string, options: RequestInit = {})
 //
 // Not `pub` -> private to this file, same as a non-exported function in TS.
 //
@@ -79,7 +77,7 @@ async fn github_request(
     endpoint: &str,
     body: Option<Value>, // `Value` = "any JSON", like TS `any`/`unknown` for JSON
 ) -> Result<Response> {
-    // TS:  if (!ENV.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured.");
+    // if (!ENV.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured.");
     //
     // `let Some(x) = option else { ... }` reads: "if this is Some, give me the
     // inner value as `x`; otherwise run the else block (which must exit)."
@@ -93,7 +91,6 @@ async fn github_request(
         bail!("GitHub repository configuration is missing.");
     };
 
-    // TS:  `${ENV.GITHUB_API_URL}${endpoint}`
     let url = format!("{}/repos/{owner}/{repo}{endpoint}", ENV.github_api_url);
 
     // Build the request step by step (builder pattern).
@@ -115,7 +112,7 @@ async fn github_request(
     // It's `try { await ... }` + re-throw, in one character.
     let response = request.send().await?;
 
-    // TS:  if (!response.ok) { throw new Error(`GitHub API error: ${response.status} ${await response.text()}`) }
+    // if (!response.ok) { throw new Error(`GitHub API error: ${response.status} ${await response.text()}`) }
     let status = response.status();
     if !status.is_success() {
         let text = response.text().await.unwrap_or_default();
@@ -138,17 +135,16 @@ pub async fn get_pull_request_files(pull_number: u64) -> Result<Vec<GitHubFile>>
     )
     .await?;
 
-    // TS:  return response.json() as Promise<GitHubFile[]>;
+    // return response.json() as Promise<GitHubFile[]>;
     // Same idea, but the type is checked against the real JSON as it's parsed.
     Ok(response.json::<Vec<GitHubFile>>().await?)
 }
 
-// Exported in the TS version but not called by anything yet.
 #[allow(dead_code)]
 pub async fn get_pull_request_diff(pull_number: u64) -> Result<String> {
     let files = get_pull_request_files(pull_number).await?;
 
-    // TS:  files.map(file => [ ... ].join("\n")).join("\n\n")
+    // files.map(file => [ ... ].join("\n")).join("\n\n")
     // Iterators in Rust are the same idea as array methods: .map() then collect.
     let sections: Vec<String> = files
         .iter()
@@ -158,7 +154,6 @@ pub async fn get_pull_request_diff(pull_number: u64) -> Result<String> {
                 format!("Status: {}", file.status),
                 format!("Additions: {}", file.additions),
                 format!("Deletions: {}", file.deletions),
-                // TS:  file.patch ?? "Diff unavailable."
                 file.patch
                     .clone()
                     .unwrap_or_else(|| "Diff unavailable.".to_string()),
@@ -170,7 +165,6 @@ pub async fn get_pull_request_diff(pull_number: u64) -> Result<String> {
     Ok(sections.join("\n\n"))
 }
 
-// Exported in the TS version but not called by anything yet.
 #[allow(dead_code)]
 pub async fn post_review_comments(
     pull_number: u64,

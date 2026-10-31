@@ -130,7 +130,6 @@ fn parse_value(raw: &str) -> String {
     }
 
     // Unquoted value: stop at the first `#`, then trim spaces.
-    // TS (dotenv):  GITHUB_REPO=# some comment   ->   ""
     raw.split('#').next().unwrap_or("").trim().to_string()
 }
 
@@ -168,7 +167,6 @@ pub static ENV: LazyLock<Env> = LazyLock::new(|| {
 
         // Application
         node_env: var("NODE_ENV").unwrap_or_else(|| "development".to_string()),
-        // TS:  Number(process.env.PORT) || 3000
         // parse() can fail (like Number("abc") -> NaN), so it returns a Result;
         // .ok() turns "failed" into None, and unwrap_or(3000) is the `|| 3000`.
         port: var("PORT")
