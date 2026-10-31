@@ -38,7 +38,11 @@ pub struct Env {
     pub github_token: Option<String>,
     pub github_owner: Option<String>,
     pub github_repo: Option<String>,
-
+    //pub github_owner: var("GITHUB_OWNER").or_else(|| Some("JianoFreo".to_string())),
+    //pub github_repo: var("GITHUB_REPO").or_else(|| Some("your-repo-name".to_string())),
+    ///// or if you want to hardcode them, you can do that too:
+    //pub github_owner: Some("JianoFreo".to_string()),
+    //pub github_repo: Some("your-repo-name".to_string()),
     // Application
     pub node_env: String,
     pub port: u16,
