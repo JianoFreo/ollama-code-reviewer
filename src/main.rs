@@ -25,11 +25,11 @@ mod types;
 // ---------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------
-// TS:  import { reviewDiff, reviewPullRequest } from "./services/review.service.js";
+//  { reviewDiff, reviewPullRequest } from "./services/review.service.js";
 use anyhow::{bail, Result};
 use services::review_service::{review_diff, review_pull_request};
 
-// TS:  const sampleDiff = `...`;
+// const sampleDiff = `...`;
 // Used when you run the program without a PR number, so you can test Ollama
 // without touching GitHub. (Raw string: the content is identical to the TS.)
 const SAMPLE_DIFF: &str = r#"
@@ -46,14 +46,14 @@ diff --git a/src/calculator.ts b/src/calculator.ts
 // ---------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------
-// TS:  main();     (top-level, runs an `async function main()`)
+// main();     (top-level, runs an `async function main()`)
 //
 // Rust's `main` can't be `async` by itself, because futures need a runtime to
 // drive them (Node has one built in: the event loop). `#[tokio::main]` is a
 // one-line attribute that starts tokio's runtime and runs our async main on it.
 #[tokio::main]
 async fn main() {
-    // TS:  try { ... } catch (error) { console.error("Code review failed:", error); process.exit(1); }
+    // try { ... } catch (error) { console.error("Code review failed:", error); process.exit(1); }
     //
     // The actual work is in `run()`, which returns a Result. Here we handle the
     // failure case in one place: print to stderr and exit with code 1.
@@ -64,7 +64,7 @@ async fn main() {
     }
 }
 
-// TS:  async function main() { ... }   (the body inside the `try`)
+// async function main() { ... }   (the body inside the `try`)
 async fn run() -> Result<()> {
     // TS:  const args = process.argv.slice(2);
     // Rust's args() already skips node-style noise, but index 0 is the program
@@ -78,11 +78,11 @@ async fn run() -> Result<()> {
 
     println!("Starting Ollama Code Reviewer...\n");
 
-    // TS:  let result: string;  if (prArg) { ... } else { ... }
+    // let result: string;  if (prArg) { ... } else { ... }
     // In Rust `if` is an expression: whichever branch runs, its value is
     // assigned to `result`.
     let result = if let Some(pr_arg) = pr_arg {
-        // TS:  const pullNumber = Number(prArg);
+        // const pullNumber = Number(prArg);
         //      if (!Number.isInteger(pullNumber) || pullNumber <= 0) throw ...
         // `parse::<u64>()` fails for "abc", "1.5" and "-3", and the guard
         // `n > 0` rejects 0, so one `match` covers all the checks.
