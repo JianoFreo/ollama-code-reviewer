@@ -3,8 +3,6 @@
 [![Rust](https://img.shields.io/badge/language-Rust-orange?logo=rust)](https://www.rust-lang.org/)
 [![Ollama](https://img.shields.io/badge/AI-Ollama-black?logo=ollama)](https://ollama.com/)
 [![Qwen](https://img.shields.io/badge/Model-Qwen%202.5%20Coder-blue)](https://ollama.com/library/qwen2.5-coder)
-[![GitHub Issues](https://img.shields.io/github/issues/JianoFreo/ollama-code-reviewer)](https://github.com/JianoFreo/ollama-code-reviewer/issues)
-[![Last Commit](https://img.shields.io/github/last-commit/JianoFreo/ollama-code-reviewer)](https://github.com/JianoFreo/ollama-code-reviewer/commits)
 
 An automated GitHub Pull Request code review tool powered by Ollama and Qwen 2.5 Coder. It retrieves modified files from a GitHub repository, analyzes their changes using AI, and generates a Markdown code review that can optionally be published directly to the Pull Request.
 
