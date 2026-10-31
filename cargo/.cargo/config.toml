@@ -1,0 +1,25 @@
+# =====================================================================
+# .cargo/config.toml  ==  the "scripts" section of package.json
+# =====================================================================
+# Cargo "aliases" let you type short commands, exactly like `npm run <name>`.
+#
+#   package.json                                   this file
+#   -----------------------------------------      -------------------------
+#   "dev":    "nodemon ... tsx src/index.ts"   ->   cargo dev     (auto-reload)
+#   "build":  "tsc"                            ->   cargo build --release   (built in to cargo, can't be aliased)
+#   "start":  "node dist/index.js"             ->   cargo start    (run the optimized build)
+#   "review": "tsx src/index.ts"               ->   cargo review   (compile + run once)
+#
+# Arguments go straight after the alias, no extra "--" needed:
+#   npm run review -- 12 --post    ->    cargo review 12 --post
+[alias]
+# `cargo dev` needs a one-time install:  cargo install cargo-watch
+# (cargo-watch is the Rust equivalent of nodemon)
+dev = "watch -x run"
+review = "run --"
+start = "run --release --"
+
+# When you run `cargo update` / add a crate, only pick versions that work with
+# the `rust-version` in Cargo.toml (like respecting "engines" in package.json).
+[resolver]
+incompatible-rust-versions = "fallback"

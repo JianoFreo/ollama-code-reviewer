@@ -1,0 +1,81 @@
+# =====================================================================
+# Cargo.toml  ==  package.json
+# =====================================================================
+# Cargo is Rust's npm + tsc + node rolled into ONE tool.
+#   npm install  ->  (automatic) `cargo build` downloads what's listed below
+#   node_modules ->  ~/.cargo/registry (shared cache, NOT inside your project)
+#   dist/        ->  target/  (compiled output, git-ignored)
+#   package-lock ->  Cargo.lock (generated for you the first time you build)
+
+[package]
+name = "ollama-code-reviewer"
+version = "1.0.0"
+description = "AI-powered GitHub PR code reviewer using Ollama"
+license = "ISC"
+keywords = ["ollama", "github", "code-review", "ai"]
+repository = "https://github.com/JianoFreo/ollama-code-reviewer"
+homepage = "https://github.com/JianoFreo/ollama-code-reviewer#readme"
+# "main": "dist/index.js"  ->  Cargo automatically treats src/main.rs as the
+# entry point and produces a binary named after `name` above:
+#   target/release/ollama-code-reviewer
+edition = "2021"      # the "language version" (like "target": "esnext")
+rust-version = "1.85" # minimum Rust needed (like "engines": { "node": ">=20" } in package.json)
+
+# ---------------------------------------------------------------------
+# "dependencies"  (npm package  ->  Rust crate)
+# ---------------------------------------------------------------------
+[dependencies]
+# dotenv                 ->  (no crate!)  a small loader inside src/config/env.rs
+#   The popular `dotenvy` crate is stricter than Node's dotenv and would choke
+#   on the example .env in the README, so we wrote it by hand. See env.rs.
+# global `fetch`         ->  reqwest      HTTP client. Rust has no built-in fetch.
+#   default-features = false + "rustls-tls-native-roots" = use a pure-Rust TLS
+#   stack (so you do NOT need OpenSSL installed) that trusts your operating
+#   system's certificate store (so it also works behind corporate proxies /
+#   antivirus HTTPS scanning, which install their own certificates).
+#   "json" = adds the handy .json(...) helpers.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls-native-roots"] }
+# JSON.stringify / JSON.parse  ->  serde + serde_json
+#   serde = "serialize/deserialize", turns structs <-> JSON.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# the built-in Node event loop  ->  tokio
+#   Node runs async code out of the box. Rust does not: you need an
+#   "async runtime". tokio is the standard one.
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+# RegExp literals (/foo/)  ->  regex crate
+regex = "1"
+# try/catch + `throw new Error(...)`  ->  anyhow (easy error type + bail! macro)
+anyhow = "1"
+
+# (there is no "devDependencies" block needed here:
+#   typescript / tsx / @types/node  -> the Rust compiler already includes all that
+#   nodemon                         -> cargo-watch, installed globally, see .cargo/config.toml)
+
+# ---------------------------------------------------------------------
+# tsconfig.json  --  your original comments, translated
+# ---------------------------------------------------------------------
+# Visit https://aka.ms/tsconfig to read more about this file
+#   -> Rust equivalent: https://doc.rust-lang.org/cargo/reference/manifest.html
+#
+# File Layout ("rootDir": "./src", "outDir": "./dist")
+#   -> src/ is always the root; build output always goes to target/.
+#
+# Environment Settings ("module": "nodenext", "target": "esnext", "types": ["node"])
+#   -> `edition = "2021"` above. No @types/node: Rust's standard library
+#      (std::env, std::process, ...) is built in and fully typed.
+#
+# Other Outputs (sourceMap, declaration, declarationMap)
+#   -> Not needed: you ship ONE native binary, there are no .d.ts / .map files.
+#
+# Stricter Typechecking Options
+#   "noUncheckedIndexedAccess": true  -> built in: `vec[i]` may panic, so we use
+#                                        `vec.get(i)` which returns Option<&T>.
+#   "exactOptionalPropertyTypes": true -> built in: `Option<T>` is either Some(T)
+#                                         or None, never "undefined sneaking in".
+#
+# Style Options (noUnusedLocals, noUnusedParameters, noImplicitReturns, ...)
+#   -> rustc already warns about unused variables / imports by default.
+#
+# Recommended Options ("strict": true, "verbatimModuleSyntax", "isolatedModules", ...)
+#   -> Rust is "strict: true" and then some, always. Nothing to switch on.
