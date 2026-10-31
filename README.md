@@ -1,3 +1,9 @@
+# Ollama Code Reviewer
+
+An automated GitHub Pull Request code review tool powered by Ollama and Qwen 2.5 Coder. It retrieves modified files from a GitHub repository, analyzes their changes using AI, and generates a Markdown code review that can optionally be published directly to the Pull Request.
+
+## Architecture
+
 ```mermaid
 flowchart TD
     A[main.rs] --> B[review_service.rs]
@@ -9,214 +15,228 @@ flowchart TD
     D --> H[Ollama Qwen 7B]
 ```
 
-# .env
-```.env
-# AI Configuration -- locally 
+---
+
+# 1. Prerequisites
+
+Install the following before running the application:
+
+| Requirement | Description |
+|---|---|
+| Rust 1.85+ | Rust compiler and Cargo package manager. |
+| Git | Clone the repository. |
+| Ollama | Runs the local AI model. |
+| GitHub Account | Provides access to the target repository and Pull Requests. |
+
+
+---
+
+# 2. Configure Environment Variables
+
+Create a `.env` file in the project root, alongside `Cargo.toml`.
+
+### Local AI Configuration
+
+```env
+# AI Configuration -- locally
 AI_PROVIDER=ollama
 AI_BASE_URL=http://localhost:11434
 AI_MODEL=qwen2.5-coder:7b
-AI_API_KEY=Leave it empty. Local Ollama doesn’t need a key.
+AI_API_KEY=
+```
 
-# AI Configuration -- cloud based
-AI_PROVIDER=openai
-AI_BASE_URL=https://api.openai.com/v1
-AI_MODEL=gpt-6
-AI_API_KEY=your_openai_api_key
+Leave `AI_API_KEY` empty when using local Ollama.
 
+### GitHub Configuration
+
+```env
 # GitHub Configuration
-GITHUB_API_URL=https://api.github.com #Leave it as is. Only change it if you use GitHub Enterprise.
-GITHUB_TOKEN=
-GITHUB_OWNER=JianoFreo #The first part of the repo URL: github.com/owner/repo
-GITHUB_REPO=# The second part of the repo URL: github.com/owner/repo
+GITHUB_API_URL=https://api.github.com
+GITHUB_TOKEN=github_pat_...
+GITHUB_OWNER=your-github-username
+GITHUB_REPO=your-repository-name
+```
 
-Paste it in: GITHUB_TOKEN=github_pat_...
+| Variable | Description |
+|---|---|
+| `GITHUB_API_URL` | GitHub API URL. Leave unchanged unless using GitHub Enterprise. |
+| `GITHUB_TOKEN` | GitHub Personal Access Token. |
+| `GITHUB_OWNER` | Repository owner's username. |
+| `GITHUB_REPO` | Target repository name. |
+
+### Optional Application Configuration
+
+```env
 # Application
 NODE_ENV=development
 PORT=3000
 ```
-# Generate the token
-   - Go to github.com → click your profile picture → Settings.
-   - Scroll down to Developer settings → Personal access tokens → Fine-grained tokens.
-   - Click Generate new token and give it a name.
-   - Under Repository access, choose Only select repositories and pick the repo from above.
-   - Under Permissions → Repository permissions, set Pull requests to Read and write. (GitHub adds Metadata: Read automatically.)
-   - Click Generate token and copy it right away, because GitHub only shows it once.
 
+These variables are retained from the original configuration but are currently unused.
 
 ---
 
-# 🦀 Rust version — setup & running
+# 3. Generate a GitHub Token
 
-This is the same project as the TypeScript one, same folders, same file names
-(`review.service.ts` → `review_service.rs`), same `.env`. Only the language changed.
-Every file has comments showing the TypeScript line each piece replaces.
+The application needs a GitHub Fine-grained Personal Access Token to retrieve Pull Request files and publish reviews.
 
-## 1. Install Rust (one time)
+1. Go to [GitHub Settings](https://github.com/settings/personal-access-tokens).
+2. Select **Fine-grained tokens**.
+3. Click **Generate new token**.
+4. Enter a token name.
+5. Under **Repository access**, select **Only select repositories** and choose your target repository.
+6. Under **Repository permissions**, configure:
+   - Pull requests: **Read and write**
+   - Metadata: **Read-only** (automatically included).
+7. Generate the token and copy it immediately.
 
-Rust installs with **rustup** (think `nvm` + `npm` in one). It gives you `cargo`.
+Paste the token into your `.env` file:
 
-- **macOS / Linux:** `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-- **Windows:** download and run `rustup-init.exe` from https://rustup.rs
-  (it will ask you to install the Visual Studio C++ Build Tools — say yes, it's required).
-
-Then **open a new terminal** and check it worked (you need Rust **1.85 or newer**):
-
-```bash
-cargo --version
-rustc --version
-```
-
-## 2. Make sure Ollama is running
-
-```bash
-ollama pull qwen2.5-coder:7b     # one time
-ollama serve                     # skip if the Ollama app is already running
-```
-
-## 3. Create your `.env`
-
-Same file, same variable names as the Node version (see the `.env` section above). Put it in the
-project root, next to `Cargo.toml`. A minimal local setup:
-
-```.env
-AI_BASE_URL=http://localhost:11434
-AI_MODEL=qwen2.5-coder:7b
+```env
 GITHUB_TOKEN=github_pat_...
-GITHUB_OWNER=your-github-username
-GITHUB_REPO=your-repo-name
 ```
 
-> **Tips for the `.env` above**
-> - If you copy the big block from the top of this README, the line `AI_API_KEY=Leave it empty...` is an
->   *instruction*, not a value. Delete the text after `=` (leave it blank) for local Ollama.
-> - That block contains **two** `AI_*` sections. If a key appears twice the **last one wins** (this is true in
->   Node's dotenv too), so you'd end up on the OpenAI settings. Keep only the section you want.
+**Important:** Never commit your `.env` file or expose your GitHub token publicly. Add `.env` to `.gitignore`.
 
-## 4. Run it — `npm` vs `cargo`
+---
 
-| What you did in Node | What you do in Rust | Notes |
-| --- | --- | --- |
-| `npm install` | *(nothing)* | `cargo` downloads dependencies automatically the first time you build |
-| `npm run review` | `cargo review` | compile + run once (reviews the built-in sample diff) |
-| `npm run review -- 12` | `cargo review 12` | review PR #12 and print the result |
-| `npm run review -- 12 --post` | `cargo review 12 --post` | review PR #12 **and post it to GitHub** |
-| `npm run dev` (nodemon) | `cargo dev` | re-runs on every save. One-time setup: `cargo install cargo-watch` |
-| `npm run build` (tsc) | `cargo build --release` | creates `target/release/ollama-code-reviewer` |
-| `npm start` (node dist/index.js) | `cargo start 12` &nbsp;or&nbsp; `./target/release/ollama-code-reviewer 12` | run the optimized build |
+# 4. Build and Run
 
-(`cargo review`, `cargo dev` and `cargo start` are shortcuts defined in `.cargo/config.toml`,
-the same idea as the `"scripts"` block in `package.json`. Plain `cargo run -- 12 --post` works too.)
+Navigate to the project root:
 
-**First build is slow** (1–3 minutes) because Cargo compiles all the dependencies once. After
-that, rebuilds take a few seconds.
-
-**The release binary is standalone.** `target/release/ollama-code-reviewer` (on Windows,
-`target\release\ollama-code-reviewer.exe`) needs no Rust and no Node installed. You can copy it to any
-machine of the same OS. Just run it from the folder that contains your `.env`.
-
-Run the tests (only the `.env` loader has any): `cargo test`
-
-## 5. Project layout (same as before)
-
+```bash
+cd ollama-code-reviewer
 ```
+
+Build the application:
+
+```bash
+cargo build
+```
+
+Cargo automatically downloads and compiles the required dependencies.
+
+### Available Commands
+
+| Command | Description |
+|---|---|
+| `cargo run` | Run the built-in sample code review. |
+| `cargo run -- 12` | Review GitHub Pull Request #12. |
+| `cargo run -- 12 --post` | Review PR #12 and publish the result to GitHub. |
+| `cargo review` | Run the sample review using the configured shortcut. |
+| `cargo review 12` | Review PR #12. |
+| `cargo review 12 --post` | Review PR #12 and publish the result. |
+| `cargo build --release` | Build an optimized executable. |
+| `cargo start 12` | Run the optimized executable against PR #12. |
+| `cargo test` | Run automated tests. |
+| `cargo dev` | Run with automatic rebuilds when files change. |
+
+`cargo review`, `cargo start`, and `cargo dev` are shortcuts configured in `.cargo/config.toml`.
+
+For automatic rebuilding during development, install:
+
+```bash
+cargo install cargo-watch
+```
+
+### Example Execution
+
+Review a Pull Request without publishing:
+
+```bash
+cargo review 12
+```
+
+Review and publish the results:
+
+```bash
+cargo review 12 --post
+```
+
+Replace `12` with the actual Pull Request number.
+
+### Release Build
+
+Generate an optimized executable:
+
+```bash
+cargo build --release
+```
+
+Output:
+
+**Windows:**
+```text
+target/release/ollama-code-reviewer.exe
+```
+
+**Linux / macOS:**
+```text
+target/release/ollama-code-reviewer
+```
+
+The compiled executable can run without installing Rust on the target machine, provided the operating system and architecture are compatible. The `.env` configuration and access to Ollama are still required.
+
+---
+
+# 5. Project Structure
+
+```text
 .
-├── Cargo.toml                       ← package.json  (+ tsconfig notes)
-├── Cargo.lock                       ← package-lock.json
-├── .cargo/config.toml               ← the "scripts" block (cargo review / dev / start)
-├── .env                             ← your secrets (git-ignored, same as before)
-├── target/                          ← dist/ + node_modules (compiled output, git-ignored)
+├── Cargo.toml
+├── Cargo.lock
+├── .cargo/
+│   └── config.toml
+├── .env
+├── target/
 └── src/
-    ├── main.rs                      ← index.ts
+    ├── main.rs
     ├── config/
-    │   ├── mod.rs                   ← (index.ts "barrel": lists the folder's files)
-    │   └── env.rs                   ← env.ts
+    │   ├── mod.rs
+    │   └── env.rs
     ├── prompts/
     │   ├── mod.rs
-    │   └── code_review_prompt.rs    ← code-review.prompt.ts
+    │   └── code_review_prompt.rs
     ├── services/
     │   ├── mod.rs
-    │   ├── github_service.rs        ← github.service.ts
-    │   ├── ollama_service.rs        ← ollama.service.ts
-    │   └── review_service.rs        ← review.service.ts
+    │   ├── github_service.rs
+    │   ├── ollama_service.rs
+    │   └── review_service.rs
     └── types/
         ├── mod.rs
-        └── review_types.rs          ← review.types.ts
+        └── review_types.rs
 ```
 
-Why the extra `mod.rs` files? In Node, a file joins your program the moment something `import`s it.
-In Rust you must *declare* each folder with `mod foo;` (in `main.rs`) and list its files in that folder's
-`mod.rs`. A file nobody declares is simply not compiled.
+- `main.rs`: Application entry point.
+- `config/`: Environment configuration.
+- `prompts/`: AI system prompts.
+- `services/github_service.rs`: GitHub API integration.
+- `services/ollama_service.rs`: Ollama API integration.
+- `services/review_service.rs`: Main code review workflow.
+- `types/`: Shared data structures.
 
 ---
 
-# 🧭 How it works
+# 6. Additional Notes
 
-## What happens when you run `cargo review 12 --post`
-
-1. **`main.rs`** starts. It reads the arguments: `12` is the PR number and `--post` means "post the result
-   to GitHub". With no number it reviews a hard-coded sample diff instead (a quick way to test Ollama).
-2. It calls **`review_pull_request(12, true)`** in `review_service.rs`, the brain of the app.
-3. That asks **`github_service.rs`** for the list of files changed in PR #12
-   (`GET /repos/{owner}/{repo}/pulls/12/files`). It sends your token and the GitHub API headers.
-4. `review_service.rs` **filters out noise**: lock files, images/fonts, minified files, `dist/` /
-   `build/` / `node_modules/` and any file GitHub gave no patch for.
-5. For **each remaining file**, it:
-   - cuts the patch to 12,000 characters (small local models choke on huge inputs),
-   - builds a small text: file name + status + patch,
-   - calls **`ollama_service.rs`**, which sends it to Ollama's `/api/chat` together with the system prompt
-     from `code_review_prompt.rs`, and returns the model's answer.
-   - If one file fails, the error is written into the report for that file and the rest continue.
-6. All the per-file answers are joined into one Markdown report ("## Automated Code Review").
-7. With `--post`, that report is sent back to GitHub as a PR review comment
-   (`POST /repos/{owner}/{repo}/pulls/12/reviews`). Either way it's printed to your terminal.
-
-## TypeScript → Rust cheat sheet
-
-| TypeScript | Rust | Meaning |
-| --- | --- | --- |
-| `import { x } from "./y.js"` | `use crate::y::x;` | bring something into scope |
-| `export function f()` | `pub fn f()` | make it usable from other files |
-| `const a = 1` / `let a = 1` | `let a = 1;` / `let mut a = 1;` | **variables are read-only unless you say `mut`** |
-| `string` | `String` / `&str` | `String` = owned text, `&str` = borrowed (read-only) text |
-| `string \| undefined` | `Option<String>` | `Some("x")` or `None`; you *must* handle `None` |
-| `string[]` | `Vec<String>` | growable list |
-| `interface Foo {}` | `struct Foo {}` | a data shape |
-| `"low" \| "high"` | `enum { Low, High }` | a fixed set of choices |
-| `throw new Error("x")` | `bail!("x")` | fail with a message |
-| `try { } catch { }` | `match result { Ok(..) => .., Err(..) => .. }` | handle success or failure |
-| `await somePromise` (and let errors bubble up) | `some_future().await?` | the `?` means "if it failed, return that error from my function" |
-| `async function f(): Promise<T>` | `async fn f() -> Result<T>` | async functions that can fail |
-| `a ?? b` | `a.unwrap_or(b)` | default value |
-| `` `Hi ${name}` `` | `format!("Hi {name}")` | string interpolation |
-| `console.log(x)` | `println!("{x}")` | print to the terminal |
-| `console.error(x)` | `eprintln!("{x}")` | print to stderr |
-| `process.exit(1)` | `std::process::exit(1)` | quit with an error code |
-| `arr.filter(f).map(g)` | `.iter().filter(f).map(g).collect()` | iterator chains (`collect` builds the list at the end) |
-| `JSON.stringify({...})` | `json!({...})` | JSON object literal |
-| `res.json() as Foo` | `res.json::<Foo>()` | **checked** at runtime (TS's `as` is just a promise to the compiler) |
-
-## npm package → Rust crate
-
-| npm | crate | Used for |
-| --- | --- | --- |
-| built-in `fetch` | `reqwest` | HTTP calls to GitHub and Ollama |
-| `JSON.parse` / `JSON.stringify` | `serde`, `serde_json` | JSON ↔ typed structs |
-| Node's event loop | `tokio` | runs `async` code (`#[tokio::main]` in `main.rs`) |
-| `RegExp` | `regex` | the skip-patterns in `review_service.rs` |
-| `try/catch` + `new Error` | `anyhow` | easy error type + `bail!` |
-| `dotenv` | *(own loader in `config/env.rs`)* | reads `.env` (see the comment there for why) |
-| `typescript`, `tsx`, `@types/node` | *(built into Rust)* | |
-| `nodemon` | `cargo-watch` (global) | auto-restart on save |
+- **AI Provider:** The current implementation only supports Ollama. Although `AI_PROVIDER` is included in the configuration, it does not currently switch between providers.
+- **OpenAI Configuration:** Cloud AI support is not implemented yet. The application always uses Ollama's `/api/chat` endpoint.
+- **Pull Request Limits:** GitHub file retrieval currently processes a maximum of 100 changed files per Pull Request. Pagination is not implemented.
+- **Individual File Errors:** If a file fails during AI analysis, its error is recorded in the report and processing continues with the remaining files.
+- **Sample Review:** Running without a Pull Request number uses a built-in sample diff, allowing you to test the AI integration without accessing GitHub.
+- **Ollama Availability:** Ensure Ollama is running and the configured model is available before starting a review.
+- **GitHub Permissions:** The token needs Pull Requests read and write permissions if you intend to publish reviews.
 
 ---
 
-# 📝 Things I noticed while converting (behavior kept the same on purpose)
+## Troubleshooting
 
-- **`AI_PROVIDER` is read but never used.** The code always calls Ollama's `/api/chat` endpoint, so the
-  "cloud based / OpenAI" settings in the `.env` example won't actually work: OpenAI uses a different URL
-  (`/chat/completions`) and a different response shape. Supporting it would be a good next feature.
-- Only the **first 100 changed files** of a PR are fetched (`per_page=100`, no paging).
-- `get_pull_request_diff`, `post_review_comments` and `ReviewFinding` exist but nothing calls them yet
-  (same as the TS). `PORT` and `NODE_ENV` are loaded but unused too (there's no server).
-- One genuine Rust-vs-Node difference: Node's `fetch` sends a `User-Agent` header automatically, and GitHub
-  rejects requests without one. `github_service.rs` sets it explicitly.
+| Issue | Possible Solution |
+|---|---|
+| Cannot connect to Ollama | Start Ollama using `ollama serve`. |
+| Model not found | Run `ollama pull qwen2.5-coder:7b`. |
+| GitHub authentication failed | Verify `GITHUB_TOKEN` and repository permissions. |
+| Repository not found | Check `GITHUB_OWNER` and `GITHUB_REPO`. |
+| Missing environment variables | Verify that `.env` is in the project root. |
+| Cargo command not found | Verify Rust installation and reopen your terminal. |
+| Build errors | Run `rustc --version` and ensure Rust 1.85 or newer is installed. |
